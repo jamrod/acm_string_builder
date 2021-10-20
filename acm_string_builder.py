@@ -1,4 +1,5 @@
 import csv
+from os.path import exists
 
 def read_csv(path_to_file):
     out = []
@@ -31,11 +32,37 @@ def format_group_string(group, group_members, node_number):
     
 
 def get_input():
-    node = input("What's the node number? ")
-    net = input("What's the network name? ")
-    csv_path = input("Path to csv: ")
-    out_path = input("Save string to: ")
-    return (node, net, csv_path, out_path)
+    check_input = False
+    def prompt_inputs():
+        node = input("What's the node number? ")
+        net = input("What's the network name? ")
+        csv_path = input("Path to csv: ")
+        good_path = exists(csv_path)
+        while not good_path:
+            csv_path = input("File not found, re-enter path to csv: ")
+        out_path = input("Save string to: ")
+        out_exists = exists(out_path)
+        write_flag = "w"
+        write_flag_text = ""
+        if out_exists:
+            valid = False
+            while not valid:          
+                write_flag = input("File exists, enter 'w' to overwrite or 'a' to append new strings: ")
+                valid = write_flag == 'w' or write_flag == 'a'
+            if write_flag == 'w':
+                write_flag_text = "--Overwrite"
+            else:
+                write_flag_text = "--Append"
+        message = f"""I've got:\n node = {node}\n net = {net}\n Path to csv = {csv_path}\n Output to = {out_path} {write_flag_text}\nIs that right ('y' to accept or 'n' to start over)? """
+        confirm = input(message)
+        if confirm == 'y':
+            return (node, net, csv_path, out_path, write_flag)
+        else:
+            return False
+    while not check_input:
+        check_input = prompt_inputs()
+    return check_input
+    
 
 def main():
     input = get_input()
@@ -58,7 +85,9 @@ def main():
         call_group_strings.append(format_group_string(group, call_groups[group], node_number))
     call_group_ouput = "\n".join(call_group_strings)
     full_string = f"{call_point_output}\n{call_group_ouput}"
-    with open (input[3], "w") as write_file:
+    path_to_output = input[3]
+    write_condition = input[4]
+    with open (path_to_output, write_condition) as write_file:
         write_file.write(full_string)
     return input[3]
 

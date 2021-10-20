@@ -63,15 +63,10 @@ def get_input():
         check_input = prompt_inputs()
     return check_input
     
-
-def main():
-    input = get_input()
-    node_number = input[0]
-    net_name = input[1]
-    csv_data = read_csv(input[2])
+def process_csv_data(data, node_number, net_name):
     call_groups = {}
     call_points = []
-    for call_point in csv_data:
+    for call_point in data:
         call_points.append(format_call_string(call_point, node_number, net_name))
         if len(call_point["CALL-GROUP"]) >= 1:
             cp_symbol = f"_{node_number}_{call_point['CALL-POINT']}"
@@ -84,15 +79,36 @@ def main():
     for group in call_groups:
         call_group_strings.append(format_group_string(group, call_groups[group], node_number))
     call_group_ouput = "\n".join(call_group_strings)
-    full_string = f"{call_point_output}\n{call_group_ouput}"
+    return f"{call_point_output}\n{call_group_ouput}"
+
+def validate_csv_data(csv_data):
+    needed_headers = ["DEVICE", "INPUT", "CALL-POINT", "KIND", "NAME", "TALK", "CALL-GROUP", "CONDITION", "CONDITION-INPUTS"]
+    column_headers = csv_data[0].keys()
+    for header in needed_headers:
+        if header not in column_headers:
+            return (False, header)
+    return (True,None)
+
+def main():
+    input = get_input()
+    node_number = input[0]
+    net_name = input[1]
+    csv_data = read_csv(input[2])
+    valid_csv = validate_csv_data(csv_data)
+    if not valid_csv[0]:
+        print(f"Invalid csv data, Header {valid_csv[1]} not found")
+        return False
+    full_string = process_csv_data(csv_data, node_number, net_name)
     path_to_output = input[3]
     write_condition = input[4]
     with open (path_to_output, write_condition) as write_file:
         write_file.write(full_string)
-    return input[3]
+    return path_to_output
 
 
 if __name__ == "__main__":
     file_written = main()
     if file_written:
         print(f"Sucess! check {file_written}")
+    else:
+        print("exiting...")

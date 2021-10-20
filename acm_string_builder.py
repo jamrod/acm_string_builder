@@ -67,13 +67,14 @@ def process_csv_data(data, node_number, net_name):
     call_groups = {}
     call_points = []
     for call_point in data:
-        call_points.append(format_call_string(call_point, node_number, net_name))
-        if len(call_point["CALL-GROUP"]) >= 1:
-            cp_symbol = f"_{node_number}_{call_point['CALL-POINT']}"
-            if call_point["CALL-GROUP"] in call_groups:
-                call_groups[call_point["CALL-GROUP"]].append(cp_symbol)
-            else:
-                call_groups[call_point["CALL-GROUP"]] = [cp_symbol]
+        if call_point["KIND"] >= 1:
+            call_points.append(format_call_string(call_point, node_number, net_name))
+            if len(call_point["CALL-GROUP"]) >= 1:
+                cp_symbol = f"_{node_number}_{call_point['CALL-POINT']}"
+                if call_point["CALL-GROUP"] in call_groups:
+                    call_groups[call_point["CALL-GROUP"]].append(cp_symbol)
+                else:
+                    call_groups[call_point["CALL-GROUP"]] = [cp_symbol]
     call_point_output = "\n".join(call_points)
     call_group_strings = []
     for group in call_groups:
@@ -82,12 +83,18 @@ def process_csv_data(data, node_number, net_name):
     return f"{call_point_output}\n{call_group_ouput}"
 
 def validate_csv_data(csv_data):
+    table_length = len(csv_data)
+    if table_length <=1:
+        print("Invalid csv data, no data")
+        return False
     needed_headers = ["DEVICE", "INPUT", "CALL-POINT", "KIND", "NAME", "TALK", "CALL-GROUP", "CONDITION", "CONDITION-INPUTS"]
     column_headers = csv_data[0].keys()
     for header in needed_headers:
         if header not in column_headers:
-            return (False, header)
-    return (True,None)
+            print(f"Invalid csv data, Header {header} not found")
+            return False
+    
+    return True
 
 def main():
     input = get_input()
@@ -95,8 +102,7 @@ def main():
     net_name = input[1]
     csv_data = read_csv(input[2])
     valid_csv = validate_csv_data(csv_data)
-    if not valid_csv[0]:
-        print(f"Invalid csv data, Header {valid_csv[1]} not found")
+    if not valid_csv:
         return False
     full_string = process_csv_data(csv_data, node_number, net_name)
     path_to_output = input[3]

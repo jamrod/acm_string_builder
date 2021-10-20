@@ -11,3 +11,4 @@ Needs to have these headers on the first line of the spread sheet:
  - `CALL-GROUP`: Adds call point to CALL GROUP named, creates CALL GROUP also if named for the first time, ie 'G-CODE'
  - `CONDITION`: 'RESET', 'LOW' or 'HIGH'
  - `CONDITION-INPUTS`: callpoint referenced by CONDITION, multiple entries separated by a single space 
+ Empty rows will result in emtpy call points being created which will not compile

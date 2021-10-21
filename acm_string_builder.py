@@ -67,7 +67,7 @@ def process_csv_data(data, node_number, net_name):
     call_groups = {}
     call_points = []
     for call_point in data:
-        if call_point["KIND"] >= 1:
+        if len(call_point["KIND"]) >= 1:
             call_points.append(format_call_string(call_point, node_number, net_name))
             if len(call_point["CALL-GROUP"]) >= 1:
                 cp_symbol = f"_{node_number}_{call_point['CALL-POINT']}"

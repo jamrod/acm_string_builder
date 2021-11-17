@@ -2,13 +2,19 @@ import csv
 from os.path import exists
 
 def read_csv(path_to_file):
+    #load csv file and return as a list of dictionaries for each row
     out = []
     with open(path_to_file) as csv_file:
         rows = csv.DictReader(csv_file)
         out = [row for row in rows]
     return out
 
+<<<<<<< HEAD
 def format_call_string(cp_data, node_number, net_name): 
+=======
+def format_call_string(cp_data, node_number, net_name):
+    #returns a string representing a single call point
+>>>>>>> 7350f0bc64368cb21b11ec588437779079e4afd3
     msg_4 = f"{node_number}{cp_data['CALL-POINT']}"
     msg_8_12 = f"{node_number}-{cp_data['CALL-POINT']}"
     nameString = cp_data["NAME"]
@@ -29,11 +35,13 @@ def format_call_string(cp_data, node_number, net_name):
     return output
 
 def format_group_string(group, group_members, node_number):
+    #returns a string representing a call group and its member call points
     return f"""(CALL-GROUP _{group} {" ".join(group_members)} _CALL-LOCATION-{node_number}
 	(NAME \"{group}\"))\n"""
     
 
 def get_input():
+    #prompt user for the node number, network name, csv file and output file and return values as a set
     check_input = False
     def prompt_inputs():
         node = input("What's the node number? ")
@@ -66,6 +74,7 @@ def get_input():
     return check_input
     
 def process_csv_data(data, node_number, net_name):
+    #Work through list of csv data generating call points string and call group strings and return a combined string
     call_groups = {}
     call_points = []
     for call_point in data:
@@ -85,6 +94,7 @@ def process_csv_data(data, node_number, net_name):
     return f"{call_point_output}\n{call_group_ouput}"
 
 def validate_csv_data(csv_data):
+    #check the csv file for all necessary headers and confirm it holds data, returns True or False
     table_length = len(csv_data)
     if table_length <=1:
         print("Invalid csv data, no data")
@@ -95,10 +105,10 @@ def validate_csv_data(csv_data):
         if header not in column_headers:
             print(f"Invalid csv data, Header {header} not found")
             return False
-    
     return True
 
 def main():
+    #Generate call point strings and call group strings and output to a text file, returns output file path on sucess or False on fail
     input = get_input()
     node_number = input[0]
     net_name = input[1]

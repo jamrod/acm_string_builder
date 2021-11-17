@@ -8,16 +8,18 @@ def read_csv(path_to_file):
         out = [row for row in rows]
     return out
 
-def format_call_string(cp_data, node_number, net_name):
+def format_call_string(cp_data, node_number, net_name): 
     msg_4 = f"{node_number}{cp_data['CALL-POINT']}"
     msg_8_12 = f"{node_number}-{cp_data['CALL-POINT']}"
+    nameString = cp_data["NAME"]
+    name = nameString if len(nameString)>1 else msg_8_12
     input = cp_data["CALL-POINT"]
     if cp_data["DEVICE"] == "V":
         input = cp_data["INPUT"]
     output = f"""(CALL _{node_number}_{cp_data["CALL-POINT"]} _CALL-{cp_data["KIND"]} _CALL-LOCATION-{node_number}
 	(_NAME NAME)
 	(NETWORK _{net_name})
-	(NAME \"{cp_data["NAME"]}\")
+	(NAME \"{name}\")
 	(_NAME-4 \"{msg_4}\")
 	(_NAME-8 \"{msg_8_12}\")
 	(_NAME-12 \"{msg_8_12}\")

@@ -9,12 +9,8 @@ def read_csv(path_to_file):
         out = [row for row in rows]
     return out
 
-<<<<<<< HEAD
-def format_call_string(cp_data, node_number, net_name): 
-=======
 def format_call_string(cp_data, node_number, net_name):
     #returns a string representing a single call point
->>>>>>> 7350f0bc64368cb21b11ec588437779079e4afd3
     msg_4 = f"{node_number}{cp_data['CALL-POINT']}"
     msg_8_12 = f"{node_number}-{cp_data['CALL-POINT']}"
     nameString = cp_data["NAME"]
@@ -106,6 +102,33 @@ def validate_csv_data(csv_data):
             print(f"Invalid csv data, Header {header} not found")
             return False
     return True
+
+def format_xml_callstring(cp_data, node_number):
+    #returns an xml string representing one callpoint 
+    call_kind_translation = {
+        "NURSE-PRESENCE" : ("Staff Presence", "CPS-2MSP"),
+        "CODE-BLUE" : ("Code Blue", "CPS-2MCB"),
+        "TOILET-CALL" : ("Bathroom Call", "CPS-1PCRb"),
+        "ALARM-CALL" : ("Patient Call", "CM-PMGb"),
+        "EMERG-CALL" : ("Staff Assist", "CPS-2MEM"),
+        "BED-EXIT" : ("Bed Exit", "CS-PMPAD")
+    }
+    cpid = f"{node_number}.{cp_data['CALL-POINT']}"
+    sctype = call_kind_translation.get(cp_data["KIND"])[0]
+    model = call_kind_translation.get(cp_data["KIND"])[1]
+    location = ""
+    if cp_data["LOCATION"]:
+        location = cp_data["LOCATION"]
+    else:
+        location = cp_data["NAME"]
+    xml_out = f"""<callpoint><cpid>{cpid}</cpid><sctype>{sctype}</sctype><model>{model}</model><location>{location}</location></callpoint>\n"""
+    return xml_out
+
+def format_xml_file(xml_strings):
+    output = "<content>\n  "
+    output += "\n  ".join(xml_strings)
+    output += "\n</content>"
+    return output    
 
 def main():
     #Generate call point strings and call group strings and output to a text file, returns output file path on sucess or False on fail

@@ -34,10 +34,41 @@ def format_group_string(group, group_members, node_number):
     #returns a string representing a call group and its member call points
     return f"""(CALL-GROUP _{group} {" ".join(group_members)} _CALL-LOCATION-{node_number}
 	(NAME \"{group}\"))\n"""
-    
+
+def format_xml_callstring(cp_data, node_number):
+    #returns an xml string representing one callpoint
+    call_kind_translation = {
+        "NURSE-PRESENCE" : ("Staff Presence", "CPS-2MSP"),
+        "CODE-BLUE" : ("Code Blue", "CPS-2MCB"),
+        "TOILET-CALL" : ("Bathroom Call", "CPS-1PCRb"),
+        "ALARM-CALL" : ("Patient Call", "CM-PMGb"),
+        "EMERG-CALL" : ("Staff Assist", "CPS-2MEM"),
+        "BED-EXIT" : ("Bed Exit", "CS-PMPAD")
+    }
+    cpid = f"{node_number}.{cp_data['CALL-POINT']}"
+    sctype = call_kind_translation.get(cp_data["KIND"])[0]
+    model = call_kind_translation.get(cp_data["KIND"])[1]
+    location = ""
+    if len(cp_data["LOCATION"]) >= 1:
+        location = cp_data["LOCATION"]
+    else:
+        remove_words = ("PRESENCE", "CODE", "EXIT", "BED", "BATH", "ASSIST")
+        check_words = cp_data["NAME"].split()
+        for i, w in enumerate(check_words):
+            if w in remove_words:
+                check_words.pop(i)
+        location = ".".join(check_words)
+    xml_out = f"<callpoint><cpid>{cpid}</cpid><sctype>{sctype}</sctype><model>{model}</model><location>{location}</location></callpoint>"
+    return xml_out
+
+def format_xml_file(xml_strings):
+    output = "<content>\n  "
+    output += "\n  ".join(xml_strings)
+    output += "\n</content>"
+    return output  
 
 def get_input():
-    #prompt user for the node number, network name, csv file and output file and return values as a set
+    #prompt user for the node number, network name, csv file and return values as a set
     check_input = False
     def prompt_inputs():
         node = input("What's the node number? ")
@@ -46,23 +77,11 @@ def get_input():
         good_path = exists(csv_path)
         while not good_path:
             csv_path = input("File not found, re-enter path to csv: ")
-        out_path = input("Save string to: ")
-        out_exists = exists(out_path)
-        write_flag = "w"
-        write_flag_text = ""
-        if out_exists:
-            valid = False
-            while not valid:          
-                write_flag = input("File exists, enter 'w' to overwrite or 'a' to append new strings: ")
-                valid = write_flag == 'w' or write_flag == 'a'
-            if write_flag == 'w':
-                write_flag_text = "--Overwrite"
-            else:
-                write_flag_text = "--Append"
-        message = f"""I've got:\n node = {node}\n net = {net}\n Path to csv = {csv_path}\n Output to = {out_path} {write_flag_text}\nIs that right ('y' to accept or 'n' to start over)? """
+            good_path = exists(csv_path)
+        message = f"""I've got:\n node = {node}\n net = {net}\n Path to csv = {csv_path}\nIs that right ('y' to accept or 'n' to start over)? """
         confirm = input(message)
         if confirm == 'y':
-            return (node, net, csv_path, out_path, write_flag)
+            return (node, net, csv_path)
         else:
             return False
     while not check_input:
@@ -70,12 +89,15 @@ def get_input():
     return check_input
     
 def process_csv_data(data, node_number, net_name):
-    #Work through list of csv data generating call points string and call group strings and return a combined string
+    #Work through list of csv data generating call points string, call group strings and xml strings and return as a set
     call_groups = {}
     call_points = []
+    xml_call_points = []
     for call_point in data:
         if len(call_point["KIND"]) >= 1:
             call_points.append(format_call_string(call_point, node_number, net_name))
+            if len(call_point["NAME"]) >= 1:
+                xml_call_points.append(format_xml_callstring(call_point, node_number))
             if len(call_point["CALL-GROUP"]) >= 1:
                 cp_symbol = f"_{node_number}_{call_point['CALL-POINT']}"
                 if call_point["CALL-GROUP"] in call_groups:
@@ -83,11 +105,13 @@ def process_csv_data(data, node_number, net_name):
                 else:
                     call_groups[call_point["CALL-GROUP"]] = [cp_symbol]
     call_point_output = "\n".join(call_points)
+    xml_call_point_output = format_xml_file(xml_call_points)
     call_group_strings = []
     for group in call_groups:
         call_group_strings.append(format_group_string(group, call_groups[group], node_number))
-    call_group_ouput = "\n".join(call_group_strings)
-    return f"{call_point_output}\n{call_group_ouput}"
+    call_group_output = "\n".join(call_group_strings)
+
+    return (call_point_output, call_group_output, xml_call_point_output)#f"{call_point_output}\n{call_group_ouput}"
 
 def validate_csv_data(csv_data):
     #check the csv file for all necessary headers and confirm it holds data, returns True or False
@@ -103,33 +127,6 @@ def validate_csv_data(csv_data):
             return False
     return True
 
-def format_xml_callstring(cp_data, node_number):
-    #returns an xml string representing one callpoint 
-    call_kind_translation = {
-        "NURSE-PRESENCE" : ("Staff Presence", "CPS-2MSP"),
-        "CODE-BLUE" : ("Code Blue", "CPS-2MCB"),
-        "TOILET-CALL" : ("Bathroom Call", "CPS-1PCRb"),
-        "ALARM-CALL" : ("Patient Call", "CM-PMGb"),
-        "EMERG-CALL" : ("Staff Assist", "CPS-2MEM"),
-        "BED-EXIT" : ("Bed Exit", "CS-PMPAD")
-    }
-    cpid = f"{node_number}.{cp_data['CALL-POINT']}"
-    sctype = call_kind_translation.get(cp_data["KIND"])[0]
-    model = call_kind_translation.get(cp_data["KIND"])[1]
-    location = ""
-    if cp_data["LOCATION"]:
-        location = cp_data["LOCATION"]
-    else:
-        location = cp_data["NAME"]
-    xml_out = f"""<callpoint><cpid>{cpid}</cpid><sctype>{sctype}</sctype><model>{model}</model><location>{location}</location></callpoint>\n"""
-    return xml_out
-
-def format_xml_file(xml_strings):
-    output = "<content>\n  "
-    output += "\n  ".join(xml_strings)
-    output += "\n</content>"
-    return output    
-
 def main():
     #Generate call point strings and call group strings and output to a text file, returns output file path on sucess or False on fail
     input = get_input()
@@ -139,17 +136,27 @@ def main():
     valid_csv = validate_csv_data(csv_data)
     if not valid_csv:
         return False
-    full_string = process_csv_data(csv_data, node_number, net_name)
-    path_to_output = input[3]
-    write_condition = input[4]
-    with open (path_to_output, write_condition) as write_file:
-        write_file.write(full_string)
-    return path_to_output
+    files_name = input[2][:-4]
+    output_strings = process_csv_data(csv_data, node_number, net_name)
+    call_point_full_string = output_strings[0]
+    call_groups_full_string = output_strings[1]
+    ccp_import_data = output_strings[2]
+    path_to_call_point_file = f"{files_name}_call_points.txt"
+    path_to_call_group_file = f"{files_name}_call_groups.txt"
+    path_to_xml_file = f"{files_name}_ccp_import.xml"
+    with open (path_to_call_point_file, "w") as write_file:
+        write_file.write(call_point_full_string)
+    with open (path_to_call_group_file, "w") as write_file:
+        write_file.write(call_groups_full_string)
+    with open (path_to_xml_file, "w") as write_file:
+        write_file.write(ccp_import_data)
+    return (path_to_call_point_file, path_to_call_group_file, path_to_xml_file)
 
 
 if __name__ == "__main__":
-    file_written = main()
-    if file_written:
-        print(f"Sucess! check {file_written}")
+    files_written = main()
+    if files_written:
+        files = ", ".join(files_written)
+        print(f"Sucess!\nFiles created - {files}")
     else:
         print("exiting...")

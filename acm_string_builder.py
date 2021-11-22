@@ -1,6 +1,17 @@
 import csv
 from os.path import exists
 
+#Translation table from acm CALL-KIND to ccp Call Types and device model numbers
+#"CALL KIND" : ("Call Type", "model"), no comma on the last line
+CALL_KIND_TRANSLATION = {
+    "NURSE-PRESENCE" : ("Staff Presence", "CPS-2MSP"),
+    "CODE-BLUE" : ("Code Blue", "CPS-2MCB"),
+    "TOILET-CALL" : ("Bathroom Call", "CPS-1PCRb"),
+    "ALARM-CALL" : ("Patient Call", "CM-PMGb"),
+    "EMERG-CALL" : ("Staff Assist", "CPS-2MEM"),
+    "BED-EXIT" : ("Bed Exit", "CS-PMPAD")
+}
+
 def read_csv(path_to_file):
     #load csv file and return as a list of dictionaries for each row
     out = []
@@ -37,17 +48,9 @@ def format_group_string(group, group_members, node_number):
 
 def format_xml_callstring(cp_data, node_number):
     #returns an xml string representing one callpoint
-    call_kind_translation = {
-        "NURSE-PRESENCE" : ("Staff Presence", "CPS-2MSP"),
-        "CODE-BLUE" : ("Code Blue", "CPS-2MCB"),
-        "TOILET-CALL" : ("Bathroom Call", "CPS-1PCRb"),
-        "ALARM-CALL" : ("Patient Call", "CM-PMGb"),
-        "EMERG-CALL" : ("Staff Assist", "CPS-2MEM"),
-        "BED-EXIT" : ("Bed Exit", "CS-PMPAD")
-    }
     cpid = f"{node_number}.{cp_data['CALL-POINT']}"
-    sctype = call_kind_translation.get(cp_data["KIND"])[0]
-    model = call_kind_translation.get(cp_data["KIND"])[1]
+    sctype = CALL_KIND_TRANSLATION.get(cp_data["KIND"])[0]
+    model = CALL_KIND_TRANSLATION.get(cp_data["KIND"])[1]
     location = ""
     if len(cp_data["LOCATION"]) >= 1:
         location = cp_data["LOCATION"]

@@ -30,27 +30,30 @@ def format_call_string(cp_data, node_number, net_name):
     if cp_data["DEVICE"] == "V":
         input = cp_data["INPUT"]
     output = f"""(CALL _{node_number}_{cp_data["CALL-POINT"]} _CALL-{cp_data["KIND"]} _CALL-LOCATION-{node_number}
-	(_NAME NAME)
-	(NETWORK _{net_name})
-	(NAME \"{name}\")
-	(_NAME-4 \"{msg_4}\")
-	(_NAME-8 \"{msg_8_12}\")
-	(_NAME-12 \"{msg_8_12}\")
-	(_A2-MESSAGE-NUMBER \"{cp_data["CALL-POINT"]}\")
-	(_CALL-NUMBER {cp_data["CALL-POINT"]})
-	(RC _RC-{node_number} {input} {cp_data["CONDITION"]} {cp_data["CONDITION-INPUTS"]} TALK {cp_data["TALK"]}))\n"""
+    (_NAME NAME)
+    (NETWORK _{net_name})
+    (NAME \"{name}\")
+    (_NAME-4 \"{msg_4}\")
+    (_NAME-8 \"{msg_8_12}\")
+    (_NAME-12 \"{msg_8_12}\")
+    (_A2-MESSAGE-NUMBER \"{cp_data["CALL-POINT"]}\")
+    (_CALL-NUMBER {cp_data["CALL-POINT"]})
+    (RC _RC-{node_number} {input} {cp_data["CONDITION"]} {cp_data["CONDITION-INPUTS"]} TALK {cp_data["TALK"]}))\n"""
     return output
 
 def format_group_string(group, group_members, node_number):
     #returns a string representing a call group and its member call points
     return f"""(CALL-GROUP _{group} {" ".join(group_members)} _CALL-LOCATION-{node_number}
-	(NAME \"{group}\"))\n"""
+    (NAME \"{group}\"))\n"""
 
 def format_xml_callstring(cp_data, node_number):
     #returns an xml string representing one callpoint
     cpid = f"{node_number}.{cp_data['CALL-POINT']}"
     sctype = CALL_KIND_TRANSLATION.get(cp_data["KIND"])[0]
-    model = CALL_KIND_TRANSLATION.get(cp_data["KIND"])[1]
+    if cp_data["DEVICE"] == "V":
+        model = "CP-SCPGb"
+    else:
+        model = CALL_KIND_TRANSLATION.get(cp_data["KIND"])[1]
     location = ""
     if len(cp_data["LOCATION"]) >= 1:
         location = cp_data["LOCATION"]

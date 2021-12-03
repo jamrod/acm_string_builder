@@ -18,4 +18,5 @@ Needs to have these headers on the first line of the spread sheet:
  - `LOCATION` : Use to match location in ccp file, if left blank, the script will use the NAME field and remove the any of following words "PRESENCE", "CODE", "EXIT", "BED", "BATH", "ASSIST", then join any remaining terms with a '.' ie "110 BED A" becomes "110.A"
 
 If the KIND column is empty the entire row will be ignored
+
 If the NAME is empty no xml data will be created for that row, but a default value will be rendered for the acm file representing the input number
